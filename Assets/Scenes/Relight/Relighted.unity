@@ -326,8 +326,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   startMarker: {fileID: 334951857}
   endMarker: {fileID: 1226803885}
-  speed: 1
-  sunBlocker: {fileID: 0}
+  lerpSpeed: 0.125
 --- !u!81 &61377283
 AudioListener:
   m_ObjectHideFlags: 0
@@ -6213,10 +6212,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1997876201}
+  - component: {fileID: 1997876202}
   - component: {fileID: 1997876200}
   - component: {fileID: 1997876198}
   - component: {fileID: 1997876197}
-  - component: {fileID: 1997876202}
   - component: {fileID: 1997876203}
   - component: {fileID: 1997876204}
   - component: {fileID: 1997876199}
@@ -6374,8 +6373,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   startMarker: {fileID: 334951857}
   endMarker: {fileID: 1226803885}
-  speed: 1
-  sunBlocker: {fileID: 0}
+  lerpSpeed: 0.125
 --- !u!114 &1997876203
 MonoBehaviour:
   m_ObjectHideFlags: 0

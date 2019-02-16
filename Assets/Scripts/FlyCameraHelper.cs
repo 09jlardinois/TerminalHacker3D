@@ -4,81 +4,70 @@ using System.Collections;
 public class FlyCameraHelper : MonoBehaviour
 {
     // Transforms to act as start and end markers for the journey.
-    public Transform startMarker;
-    public Transform endMarker;
+    [SerializeField]
+    private Transform startMarker;
+    [SerializeField]
+    private Transform endMarker;
 
-    // Movement speed in units/sec.
-    public float speed = 1.0F;
+    // Here we set a speed for the linear interpolation. I got this recommended value online.
+    [SerializeField][Range(0,1)]
+    private readonly float lerpSpeed = 0.125f;
 
-    // Time when the movement started.
-    private float startTime;
+    // A flag that indicates if we are at the starting position (1) or ending position (-1).
+    // This determines which one we are attempting to switch to (always the opposite one).
+    // Using an int instead of bool or other flag means we can simply multiply by -1 every time
+    // the flag needs to change to flip it easily. (neg * neg = positive, pos * neg = negative)
+    // (essentially, it's an inverter).
+    private int flyToStartOrEndFlag = 1;
 
-    // Total distance between the markers.
-    private float journeyLength;
+    // Here we have a member variable for FlyTheCamera that sets our Lerp target based on
+    // whether or not we are at flyToStartOrEndFlag 1 or -1.
+    private Vector3 movementTarget;
 
-    int viewMode = 1;
-
-    public GameObject sunBlocker;
-    
-    void Start()
+    void Awake()
     {
-        // Keep a note of the time the movement started.
-        startTime = Time.time;
+        // First we want our camera to start at the start marker (duh) - the Far view.
+        transform.position = startMarker.position;
 
-        // Calculate the journey length.
-        journeyLength = Vector3.Distance(startMarker.position, endMarker.position);
-
-        //transform.position = startMarker.position;
-
-        FlyTheCamera();
-
-    }
-
-    // Follows the target position like with a spring
-    void Update()
-    {
-        //if (Input.GetKeyDown(KeyCode.V)) viewMode *= -1;
-        if (Input.GetMouseButtonDown(2)) viewMode *= -1;
-        //if (Input.GetKeyDown(KeyCode.V) && viewMode == 1)
-        if (Input.GetMouseButtonDown(2) && viewMode == 1)
-        {
-            FlyTheCameraBack();
-            //viewMode = 0;
-        }
-        //else if (viewMode == -1 && Input.GetKeyDown(KeyCode.V))
-        else if (viewMode == -1 && Input.GetMouseButtonDown(2))
-        {
-            FlyTheCamera();
-            //viewMode = 0;
-        }
+        // Then we must initialize a movement target (just set it to where it's already at
+        // so that it doesn't move on game start) or else the game will be confused and it will
+        // fall through the floor!!!! Do not remove this!
+        movementTarget = transform.position;
     }
 
     void LateUpdate()
     {
+        // We want to fly the camera every frame (even when it's not flying)
+        // Since there is no possible way without multithreading (too complex) to wait for
+        // the fly to complete after pressing Tab.
+        FlyTheCamera();
     }
 
     private void FlyTheCamera()
     {
-        // Distance moved = time * speed.
-        float distCovered = (Time.time - startTime) * speed;
+        // Here's a flag to determine if Tab was pressed on this frame.
+        bool tabWasPressed = Input.GetKeyDown(KeyCode.Tab);
 
-        // Fraction of journey completed = current distance divided by total distance.
-        float fracJourney = distCovered / journeyLength;
+        // If Tab WAS pressed, then flip the flag!
+        // BUT! only if the camera is at one of the target positions! This is so it doesn't change path mid-flight.
+        if (tabWasPressed)
+        {
+            if (flyToStartOrEndFlag == 1 && transform.position == startMarker.position)
+            {
+                movementTarget = endMarker.position;
+                flyToStartOrEndFlag *= -1;
+            }
+            else if (flyToStartOrEndFlag == -1 && transform.position == endMarker.position)
+            {
+                movementTarget = startMarker.position;
+                flyToStartOrEndFlag *= -1;
+            }
+        }
 
-        // Set our position as a fraction of the distance between the markers.
-        transform.position = Vector3.Lerp(startMarker.position, endMarker.position, fracJourney);
-    }
-
-    private void FlyTheCameraBack()
-    {
-        // Distance moved = time * speed.
-        float distCovered = (Time.time - startTime) * speed * Time.deltaTime;
-
-        // Fraction of journey completed = current distance divided by total distance.
-        float fracJourney = distCovered / journeyLength;
-
-        // Set our position as a fraction of the distance between the markers.
-        //transform.position = Vector3.Lerp(endMarker.position, startMarker.position, fracJourney);
-        transform.position = Vector3.Lerp(startMarker.position, endMarker.position, fracJourney);
+        // Here is the actual movement, lerping. We tell Lerp our start position, the position we want to go to, and how fast to go.
+        Vector3 smoothedMovementTarget = Vector3.Lerp(transform.position, movementTarget, lerpSpeed);
+        // This lil guy is the whole shebang. It updates the actual position. 
+        transform.position = smoothedMovementTarget;
+ 
     }
 }
